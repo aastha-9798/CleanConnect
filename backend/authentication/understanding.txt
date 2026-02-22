@@ -1,0 +1,115 @@
+python -m venv venv
+venv\Scripts\activate
+pip install fastapi uvicorn sqlalchemy passlib[bcrypt] python-jose
+
+fastapi → Web framework
+uvicorn → ASGI server to run FastAPI
+sqlalchemy → ORM (database abstraction layer)
+passlib[bcrypt] → Password hashing (secure)
+python-jose → JWT creation & verification
+
+Why Not One Global Session?
+Imagine:
+100 users hitting /signup and /login
+All sharing one global session
+Problems:
+Data mixing
+Transaction conflicts
+Race conditions
+Hard-to-debug errors
+Thread safety issues
+
+Each request should be isolated.
+
+we use yield instead of return yield pauses the function instead of ending it.
+return = give and exit
+yield = give, wait, then clean up
+
+If sessions aren’t closed properly, over time you get:
+Memory leaks
+Too many open DB connections
+Database connection pool exhaustion
+App becoming slow
+Eventually server crash
+
+CryptContext
+Configures which hashing algorithm to use
+Here → argon2
+
+in JWT, we typically use:
+
+{
+  "sub": "user_id_here",
+  "type": "access",
+  "exp": ...
+}
+
+To create a JWT, we need:
+Secret key
+Algorithm
+Expiration time
+
+Why Should /me Reject Refresh Token
+because refresh tokens :
+Should have minimal exposure
+Should only be used at /refresh endpoin
+
+If access token expires:
+Frontend calls /refresh
+Backend verifies refresh token
+Issues new access token
+Frontend retries /me with new access token
+
+Verify signature (trust foundation)
+Verify expiry
+Verify token type
+Extract user
+Authorize
+That is proper security layering.
+
+
+finally:
+
+Full Authentication System (End-to-End)
+1️⃣ Signup
+User sends email + password
+Password hashed with Argon2
+User stored in DB
+
+2️⃣ Login
+User sends email + password
+Password verified
+Server generates:
+Access token (15 min)
+Refresh token (7 days)
+
+3️⃣ Protected Route (/me)
+Frontend sends:
+Authorization: Bearer <access_token>
+Backend:
+Verifies signature
+Verifies expiry
+Checks type == access
+Extracts user_id
+Fetches user from DB
+Returns safe user data
+
+4️⃣ Refresh
+Frontend sends:
+Authorization: Bearer <refresh_token>
+Backend:
+Verifies signature
+Verifies expiry
+Checks type == refresh
+Extracts user_id
+Confirms user exists
+Generates new access token
+
+5️⃣ Security Layers You Implemented
+Password hashing with salt
+Signature verification
+Expiry validation
+Token type separation
+Database re-check
+Proper 401 vs 403 usage
+Stateless architecture awareness
