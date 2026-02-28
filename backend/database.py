@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base , Session
 
-DB_url="sqlite:///./backend/auth.db"
+DB_url="sqlite:///./backend/cleanconnect.db"
 engine = create_engine(DB_url, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(bind=engine)
 Base = declarative_base()

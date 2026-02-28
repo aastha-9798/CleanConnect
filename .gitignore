@@ -9,7 +9,10 @@ __pycache__/
 .env
 
 # SQLite database
-backend/auth.db
+*.db
+uploads/
 
 .vscode/
 .kiro/
+
+testimages/

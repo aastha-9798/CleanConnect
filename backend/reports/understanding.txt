@@ -1,0 +1,39 @@
+installations:
+pip install python-multipart
+
+Database Table
+Fields:
+id (primary key)
+user_id (FK)
+image_path (string)
+latitude (float)
+longitude (float)
+description (text)
+created_at (datetime)
+status (default = "pending")
+
+
+Image Strategy
+Frontend compression (UX)
+Backend file size validation
+UUID filename
+Store in /uploads/
+Store path in DB
+
+multipart/form-data?
+It allows sending:
+Files
+Text fields
+Multiple fields together
+In one request.
+
+image → file
+latitude → form field
+longitude → form field
+description → form field
+
+UploadFile → represents the uploaded file
+File() → tells FastAPI this comes from multipart/form-data
+
+Mounting means:
+“When someone hits this URL prefix, serve files from this folder.”
