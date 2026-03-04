@@ -3,10 +3,11 @@ body{
 }
 .container{
     display: flex;
-    height: 100vh;
+    min-height: 100vh;
     padding: 0;
     margin: 0;
 }
+
 header {
     color: #014c01f3;
     gap: 8px;
@@ -17,12 +18,23 @@ header {
     color: rgba(255, 255, 255, 0.6);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
+.active-tab{
+    background-color: rgba(150, 183, 159, 0.5);
+    padding: none;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    display: flex;
+}
 .sidebar{
     background-color: #025a02dd;
     font-size: 20px ;
     color:rgba(191, 240, 191, 0.733);
     padding-left: 10px;
     padding-right: 20px;
+    min-height: 100vh;
+    position: sticky;
+    top: 0;
+    overflow-y: auto;
 }
 .sidebar hr{
     color: rgba(191, 240, 191, 0.733);
