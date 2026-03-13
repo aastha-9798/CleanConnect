@@ -65,3 +65,51 @@ async def get_data(
         "status": report.status,
         "created_at": report.created_at
     }
+
+@router.get("/my-reports")
+def get_my_reports(
+    db: Session = Depends(get_db),
+    curr_user = Depends(get_current_user),
+):
+    reports = db.query(Report).filter(Report.user_id == curr_user.id).all()
+    result = []
+    for report in reports:
+        image_url = f"/{report.image_path.replace('\\', '/')}"
+        result.append({
+            "id": report.id,
+            "image_url": image_url,
+            "latitude": report.latitude,
+            "longitude": report.longitude,
+            "description": report.description,
+            "status": report.status,
+            "created_at": report.created_at
+        })
+    return result
+
+@router.get("/feed")
+def get_feed(
+    db: Session = Depends(get_db),
+    limit: int = 20,
+):
+    # Return the most recent reports across all users
+    reports = (
+        db.query(Report)
+        .order_by(Report.created_at.desc())
+        .limit(limit)
+        .all()
+    )
+
+    result = []
+    for report in reports:
+        image_url = f"/{report.image_path.replace('\\', '/')}"
+        result.append({
+            "id": report.id,
+            "username": report.user.username,
+            "image_url": image_url,
+            "latitude": report.latitude,
+            "longitude": report.longitude,
+            "description": report.description,
+            "status": report.status,
+            "created_at": report.created_at,
+        })
+    return result

@@ -1,11 +1,46 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
-        <title>Clean Connect Guidelines Page</title>
+        <title>Clean Connect Profile</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link rel="stylesheet" href="style.css">
         <meta name="author" content="Clean Connect Team">
+        <style>
+            .profile-card {
+                background-color: #fff;
+                padding: 30px;
+                border-radius: 12px;
+                box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+                max-width: 600px;
+                margin: 30px auto;
+            }
+            .profile-card h2 {
+                color: #014c01f3;
+                margin-bottom: 20px;
+            }
+            .profile-row {
+                display: grid;
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            .profile-row p {
+                margin: 8px 0;
+            }
+            .logout-btn {
+                background-color: #d32f2f;
+                color: white;
+                border: none;
+                padding: 12px 24px;
+                border-radius: 8px;
+                font-size: 16px;
+                cursor: pointer;
+                transition: background-color 0.3s ease;
+            }
+            .logout-btn:hover {
+                background-color: #b71c1c;
+            }
+        </style>
     </head>
     <body>
         <div class="container">
@@ -22,21 +57,21 @@
                     stroke-linejoin="round" 
                     d="M15.042 21.672 13.684 16.6m0 0-2.51 2.225.569-9.47 5.227 7.917-3.286-.672ZM12 2.25V4.5m5.834.166-1.591 1.591M20.25 10.5H18M7.757 14.743l-1.59 1.59M6 10.5H3.75m4.007-4.243-1.59-1.59" />
                     </svg>
-CleanConnect</h3>
+                CleanConnect</h3>
                 <hr><br>
                 <a href="home.html">
-                    <svg xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke-width="1.5"
-                        stroke="currentColor"
-                        width="20"
-                        height="20">
-                        <path stroke-linecap="round"
-                            stroke-linejoin="round"
-                            d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+                    <svg xmlns="http://www.w3.org/2000/svg" 
+                    fill="none" 
+                    viewBox="0 0 24 24" 
+                    stroke-width="1.5" 
+                    stroke="currentColor" 
+                    width="20"
+                    height="20">
+                    <path stroke-linecap="round" 
+                    stroke-linejoin="round" 
+                    d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
                     </svg>
-                Home</a><br>
+                    Home</a><br>
                 <a href="report.html">
                     <svg xmlns="http://www.w3.org/2000/svg" 
                     fill="none" 
@@ -50,7 +85,6 @@ CleanConnect</h3>
                     d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
                     </svg>
                     Raise an Issue</a><br>
-                <article class="active-tab">
                 <a href="guide.html">
                     <svg xmlns="http://www.w3.org/2000/svg" 
                     fill="none" 
@@ -64,7 +98,6 @@ CleanConnect</h3>
                     d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 0 1 0 3.75H5.625a1.875 1.875 0 0 1 0-3.75Z" />
                     </svg>
                     Waste Guidelines</a><br>
-                </article>
                 <a href="drives.html">
                     <svg xmlns="http://www.w3.org/2000/svg" 
                     fill="none" 
@@ -78,6 +111,7 @@ CleanConnect</h3>
                     d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" />
                     </svg>
                     Cleanup Drives</a><br>
+                <article class="active-tab">
                 <a href="profile.html">
                     <svg xmlns="http://www.w3.org/2000/svg" 
                     fill="none" 
@@ -91,6 +125,7 @@ CleanConnect</h3>
                     d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
                     </svg>
                     My Profile</a><br>
+                </article>
                 <a href="contact.html">
                     <svg xmlns="http://www.w3.org/2000/svg" 
                     fill="none" 
@@ -101,9 +136,9 @@ CleanConnect</h3>
                     height="20">
                     <path stroke-linecap="round" 
                     stroke-linejoin="round" 
-                    d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
+                    d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 0 0 2.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 0 1-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 0 0-1.091-.852H4.5A2.25 2.25 0 0 0 2.25 4.5v2.25Z" />
                     </svg>
-                    Contact Us</a><br>
+                    Contact</a><br>
                 <a href="about.html">
                     <svg xmlns="http://www.w3.org/2000/svg" 
                     fill="none" 
@@ -134,44 +169,48 @@ CleanConnect</h3>
                         Log Out</a>
             </div>
             <div class="main">
-                <header>Clean Connect</header>
+                <header>My Profile</header>
                 <hr class="imp">
-                <div class="tabs">
-                    <article class="active"><a href="guide.html">Segregation Guidelines</a></article>
-                    <article class="tab"><a href="ai-detect.html">AI Waste Detector</a></article>
+                <div class="profile-card">
+                    <h2>Your Account</h2>
+                    <div class="profile-row" id="profileInfo">
+                        <p>Loading your profile...</p>
+                    </div>
+                    <button class="logout-btn" id="logoutBtn">Logout</button>
                 </div>
-                <section class="guidelines-wrapper">
-                    <article class="card wet">
-                        <h2>🌿 Wet Waste (Biodegradable)</h2>
-                        <ul>
-                            <li>Fruit & Vegetable Peels</li>
-                            <li>Leftover Food</li>
-                            <li>Egg Shells</li>
-                            <li>Flowers</li>
-                            <li>Garden Waste</li>
-                        </ul>
-                        <article class="tip-box">
-                            <p><span class="bold-text">Tip:</span> Use this for composting at home or community compost pits.</p>
-                        </article>
-                    </article>
-                    <article class="card dry">
-                        <h2>🥤 Dry Waste (Recyclable)</h2>
-                        <ul>
-                            <li>Plastic Bottles</li>
-                            <li>Paper & Cardboard</li>
-                            <li>Glass Bottles</li>
-                            <li>Metal Cans</li>
-                            <li>Rubber & Thermocol</li>
-                        </ul>
-                        <article class="tip-box">
-                            <p><span class="bold-text">Tip:</span> Rinse containers before disposing. Keep separate from wet waste.</p>
-                        </article>
-                    </article>
-
-                </section>
             </div>
         </div>
+
         <script>
+            const accessToken = localStorage.getItem('access_token');
+            if (!accessToken) {
+                window.location.href = 'login.html';
+            }
+
+            async function loadProfile() {
+                try {
+                    const response = await fetch('http://localhost:8000/auth/me', {
+                        headers: {
+                            'Authorization': `Bearer ${accessToken}`
+                        }
+                    });
+                    if (!response.ok) {
+                        logout();
+                        return;
+                    }
+
+                    const user = await response.json();
+                    document.getElementById('profileInfo').innerHTML = `
+                        <p><strong>Username:</strong> ${user.username}</p>
+                        <p><strong>Email:</strong> ${user.email}</p>
+                        <p><strong>User ID:</strong> ${user.id}</p>
+                    `;
+                } catch (error) {
+                    console.error('Failed to load profile:', error);
+                    document.getElementById('profileInfo').innerHTML = '<p>Unable to load profile information.</p>';
+                }
+            }
+
             function logout() {
                 localStorage.removeItem('access_token');
                 localStorage.removeItem('refresh_token');
@@ -179,6 +218,10 @@ CleanConnect</h3>
                 localStorage.removeItem('user_email');
                 window.location.href = 'login.html';
             }
+
+            document.getElementById('logoutBtn').addEventListener('click', logout);
+
+            loadProfile();
         </script>
     </body>
 </html>
