@@ -2,12 +2,11 @@ body{
     font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 .container{
-    display: flex;
+    display: block;
     min-height: 100vh;
     padding: 0;
     margin: 0;
 }
-
 header {
     color: #014c01f3;
     gap: 8px;
@@ -31,10 +30,13 @@ header {
     color:rgba(191, 240, 191, 0.733);
     padding-left: 10px;
     padding-right: 20px;
+    width: 260px;
     min-height: 100vh;
-    position: sticky;
+    position: fixed;
     top: 0;
+    left: 0;
     overflow-y: auto;
+    z-index: 100;
 }
 .sidebar hr{
     color: rgba(191, 240, 191, 0.733);
@@ -140,8 +142,9 @@ header {
 }
 
 .main{
-    flex: 1;
+    margin-left: 280px;
     padding: 24px;
+    min-height: 100vh;
 }
 
 .segregate{
