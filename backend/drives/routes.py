@@ -77,3 +77,35 @@ def join_drive(
         "message": "participated successfully",
         "drive_id": new_participation.drive_id
     }
+
+@router.delete("/{drive_id}/leave")
+def leave_drive(
+    drive_id:str,
+    db: Session = Depends(get_db),
+    curr_user = Depends(get_current_user)
+):
+    drive= db.query(Drive).filter(Drive.id== drive_id).first()
+    if not drive :
+        raise HTTPException(status_code=404 , detail="drive does not exist")
+    
+    participation = db.query(Participation).filter((Participation.drive_id==drive_id) & (Participation.user_id==curr_user.id)).first()
+    if not participation:
+        raise HTTPException(status_code=404 , detail="participation does not exist")
+    db.delete(participation)
+    db.commit()
+    return {
+        "message": "participation removed successfully"
+    }
+
+
+
+
+
+
+
+
+#  REST mapping
+# POST → create
+# GET → read
+# PUT/PATCH → update
+# DELETE → remove
