@@ -4,6 +4,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from backend.database import engine, Base
 from backend.authentication.routes import router as auth_router
 from backend.reports.routes import router as reports_router
+from backend.drives.models import Participation, Drive
+from backend.drives.routes import router as drives_router
 import os
 
 app = FastAPI()
@@ -28,6 +30,7 @@ Base.metadata.create_all(bind=engine)
 # Include authentication routes
 app.include_router(auth_router, prefix="/auth", tags=["Authentication"])
 app.include_router(reports_router, prefix="/reports", tags=["Reports"]) 
+app.include_router(drives_router, prefix="/drives", tags=["Drives"])
 
 # Mount frontend static files
 app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
@@ -35,4 +38,3 @@ app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
 @app.get("/")
 def root():
     return {"message": "Clean Connect backend running"}
-

@@ -11,4 +11,4 @@ class User(Base):
     username = Column(String, nullable=False)
     password_hash = Column(String, nullable=False)
     reports = relationship("Report", back_populates="user", cascade="all, delete")
-    
+    participations = relationship("Participation", back_populates="user")
