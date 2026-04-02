@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException , Request
 from backend.database import get_db #actual session provider
 from sqlalchemy.orm import Session #session type hint
 from datetime import datetime , timezone
@@ -97,10 +97,53 @@ def leave_drive(
         "message": "participation removed successfully"
     }
 
+@router.get("/feed")
+def get_feed(
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    reports = db.query(Report).all()
 
+    with_drives = []
+    without_drives = []
 
+    for report in reports:
+        drive = db.query(Drive).filter((Drive.report_id == report.id) &(Drive.status == "planned")).first()
 
+        if drive:
+            count = db.query(Participation).filter(Participation.drive_id == drive.id).count()
 
+            image_url =  str(request.base_url) + report.image_path.replace("\\", "/")
+
+            with_drives.append({
+                "drive_id": drive.id,
+                "description": drive.description,
+                "scheduled_at": drive.scheduled_at,
+                "participant_count": count,
+                "latitude": report.latitude,
+                "longitude": report.longitude,
+                "image": image_url,
+                "report": {
+                    "id": report.id,
+                    "description": report.description
+                }
+            })
+
+        else:
+            image_url = str(request.base_url) + report.image_path.replace("\\", "/")
+
+            without_drives.append({
+                "id": report.id,
+                "description": report.description,
+                "latitude": report.latitude,
+                "longitude": report.longitude,
+                "image": image_url
+            })
+
+    return {
+        "drives": with_drives,
+        "reports": without_drives
+    }
 
 
 

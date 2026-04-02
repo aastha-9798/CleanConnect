@@ -6,6 +6,7 @@ from backend.authentication.routes import router as auth_router
 from backend.reports.routes import router as reports_router
 from backend.drives.models import Participation, Drive
 from backend.drives.routes import router as drives_router
+from backend.user.routes import router as user_router
 import os
 
 app = FastAPI()
@@ -31,7 +32,7 @@ Base.metadata.create_all(bind=engine)
 app.include_router(auth_router, prefix="/auth", tags=["Authentication"])
 app.include_router(reports_router, prefix="/reports", tags=["Reports"]) 
 app.include_router(drives_router, prefix="/drives", tags=["Drives"])
-
+app.include_router(user_router, prefix="/user", tags=["User"])
 # Mount frontend static files
 app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
 
