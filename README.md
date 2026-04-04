@@ -1,4 +1,4 @@
-#**CleanConnect**
+# **CleanConnect**
 This repository contains the documentation for CleanConnect.
 ## Project Overview
 Improper waste disposal is one of the most pressing environmental and public health challenges faced by urban and semi-urban areas today. Waste problems often go unreported, or reported cases lack sufficient evidence and location accuracy. Additionally, community participation in cleanliness drives is limited due to poor awareness and coordination. Improper waste management has a direct impact on environmental sustainability, public health, and the quality of life. Uncollected and unsegregated waste leads to air, water, and soil pollution, increases the spread of diseases, and contributes to climate change through greenhouse gas emissions.
