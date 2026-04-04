@@ -11,8 +11,8 @@ Authentication has been implemented with JWT access tokens and refresh tokens. O
 
 The geolocation enables users to view cleanliness drives organised near them, I.e. in their locality or nearby. This feature is to be added in the “Home” tab as “Community Feed”.
 ## Tech Stack
--Frontend: HTML, CSS, JavaScript 
--Backend: Python (Flask/Django) 
--Database: MySQL / PostgreSQL 
--Computer Vision: OpenCV with Python for waste image classification (dry vs wet waste) 
--Cloud & Storage: Firebase or AWS for authentication, real-time notifications, and image storage. 
+- Frontend: HTML, CSS, JavaScript 
+- Backend: Python (Flask/Django) 
+- Database: MySQL / PostgreSQL 
+- Computer Vision: OpenCV with Python for waste image classification (dry vs wet waste) 
+- Cloud & Storage: Firebase or AWS for authentication, real-time notifications, and image storage. 
