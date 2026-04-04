@@ -1,5 +1,5 @@
 from backend.database import Base 
-from sqlalchemy import Column, String, ForeignKey, Text , DateTime, Float
+from sqlalchemy import Column, String, ForeignKey, Text , DateTime, Float, Integer
 from datetime import datetime , timezone
 from sqlalchemy.orm import relationship
 import uuid
@@ -7,7 +7,7 @@ import uuid
 class Drive(Base):
     __tablename__="drives"
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    report_id = Column(String, ForeignKey("reports.id"), nullable=False, index=True)
+    report_id = Column(Integer, ForeignKey("reports.id"), nullable=False, index=True)
     user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
     description = Column(Text, nullable=False)
     scheduled_at = Column(DateTime, nullable=False)

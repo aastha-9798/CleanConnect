@@ -5,7 +5,7 @@ from datetime import datetime , timezone
 
 class Report(Base):  #stores all the reports uploaded by users
     __tablename__ = "reports"
-    id = Column(Integer , primary_key=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     user_id= Column(String, ForeignKey("users.id"), index=True)
     image_path = Column(String, nullable=False)
     latitude= Column(Float, nullable=False)

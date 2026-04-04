@@ -47,6 +47,20 @@
             .par{
                 line-height: 1.0;
             }
+            .loc{
+                display: flex;
+                flex-direction: column;
+                gap: 15px;
+                line-height: 1.5;
+            }
+            .h{
+                text-shadow: #fff 0px 0px 5px;
+                background-image: url('https://i.pinimg.com/1200x/49/b5/66/49b566ae50cb6ab0ca4106bf54518c4f.jpg');
+                background-size: cover;
+                background-position: center;
+                background-attachment: fixed;
+                background-repeat: no-repeat;
+            }
         </style>
     </head>
     <body>
@@ -107,21 +121,6 @@ CleanConnect</h3>
                     </svg>
                     Waste Guidelines</a><br>
                 
-                <article class="active-tab">
-                    <a href="drives.html">
-                        <svg xmlns="http://www.w3.org/2000/svg" 
-                        fill="none" 
-                        viewBox="0 0 24 24" 
-                        stroke-width="1.5" 
-                        stroke="currentColor" 
-                        width="20"
-                        height="20">
-                        <path stroke-linecap="round" 
-                        stroke-linejoin="round" 
-                        d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" />
-                        </svg>
-                        Cleanup Drives</a><br>
-                </article>
                 <a href="profile.html">
                     <svg xmlns="http://www.w3.org/2000/svg" 
                     fill="none" 
@@ -178,25 +177,187 @@ CleanConnect</h3>
                         Log Out</a>
             </div>
             <div class="main">
+                
                     <header>Clean Connect</header>
                     <hr class="imp">
+                    <div class="h">
                     <h2 align="center" style="color: rgb(3, 82, 3)">Organise a Cleanup Drive</h2>
                     <div class="par">
                         <p  align="center">Join hands with your community to make a difference!</p>
                         <p align="center">Organise a cleanup drive in your neighborhood, local park, or beach.</p>
                     </div>
-                    <form class="fm">
-                        <label for="title">Event Title:</label>
-                        <input type="text" id="title" name="title" placeholder="Enter event title">
-                        <label for="date">Select Date:</label>
-                        <input type="date" id="date" name="date">
-                        <label for="location">Select Location:</label>
-                        <iframe src="" width="600" height="400"></iframe>
-                        <label for="photo">Upload a Photo:</label>
-                        <input type="file" id="photo" name="photo" accept="image/*">
-                        <button type="submit" class="btn">Submit</button>
+                    </div>
+                    <form class="fm" id="driveForm">
+                        <label for="description">Event Description:</label>
+                        <textarea id="description" name="description" placeholder="Describe your cleanup event" style="padding: 8px; border-radius: 5px; border: 1px solid #ccc; min-height: 80px;"></textarea>
+                        <label for="scheduled_at">Event Date & Time:</label>
+                        <input type="datetime-local" id="scheduled_at" name="scheduled_at" required>
+                        <label for="report_id">Select Report Location:</label>
+                        <select id="report_id" name="report_id" required style="padding: 8px; border-radius: 5px; border: 1px solid #ccc;">
+                            <option value="">-- Loading reports... --</option>
+                        </select>
+                        <div id="reportInfo" style="background-color: #f5f5f5; padding: 10px; border-radius: 5px; display: none;">
+                            <p><strong>Selected Report:</strong></p>
+                            <p id="reportPreview"></p>
+                        </div>
+                        <button type="submit" class="btn">Create Event</button>
                     </form>
             </div>
         </div>  
     </body>
+    <script>
+        let reportsData = {};
+
+        // Load reports when page loads
+        document.addEventListener('DOMContentLoaded', async function() {
+            await loadMyReports();
+            setupFormHandler();
+        });
+
+        async function loadMyReports() {
+            try {
+                const token = localStorage.getItem('access_token');
+                if (!token) {
+                    alert('Please log in to create a cleanup drive.');
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                const response = await fetch('/reports/my-reports', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Failed to load reports: ${response.statusText}`);
+                }
+
+                const reports = await response.json();
+                const selectElement = document.getElementById('report_id');
+                selectElement.innerHTML = '<option value="">-- Select a report location --</option>';
+
+                if (reports.length === 0) {
+                    selectElement.innerHTML += '<option value="" disabled>No reports available. Create a report first.</option>';
+                    return;
+                }
+
+                reports.forEach(report => {
+                    reportsData[report.id] = report;
+                    const option = document.createElement('option');
+                    option.value = report.id;
+                    const dateStr = new Date(report.created_at).toLocaleDateString();
+                    option.textContent = `Report #${report.id} - ${report.description || 'No description'} (${dateStr})`;
+                    selectElement.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error loading reports:', error);
+                alert('Failed to load reports. Please try again.');
+            }
+        }
+
+        function setupFormHandler() {
+            const form = document.getElementById('driveForm');
+            const reportSelect = document.getElementById('report_id');
+
+            // Show report preview when a report is selected
+            reportSelect.addEventListener('change', function() {
+                const reportInfo = document.getElementById('reportInfo');
+                const reportPreview = document.getElementById('reportPreview');
+                
+                if (this.value && reportsData[this.value]) {
+                    const report = reportsData[this.value];
+                    reportPreview.innerHTML = `
+                        <strong>ID:</strong> ${report.id}<br>
+                        <strong>Description:</strong> ${report.description || 'N/A'}<br>
+                        <strong>Location:</strong> Lat: ${report.latitude}, Lon: ${report.longitude}<br>
+                        <strong>Status:</strong> ${report.status}
+                    `;
+                    reportInfo.style.display = 'block';
+                } else {
+                    reportInfo.style.display = 'none';
+                }
+            });
+
+            // Handle form submission
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                await createDrive();
+            });
+        }
+
+        async function createDrive() {
+            try {
+                const token = localStorage.getItem('access_token');
+                if (!token) {
+                    alert('Please log in to create a cleanup drive.');
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                const reportId = document.getElementById('report_id').value;
+                const description = document.getElementById('description').value;
+                const scheduledAt = document.getElementById('scheduled_at').value;
+
+                if (!reportId) {
+                    alert('Please select a report location.');
+                    return;
+                }
+
+                if (!description.trim()) {
+                    alert('Please enter an event description.');
+                    return;
+                }
+
+                if (!scheduledAt) {
+                    alert('Please select a date and time for the event.');
+                    return;
+                }
+
+                // Convert local datetime to ISO 8601 UTC format
+                const dateObj = new Date(scheduledAt);
+                const isoString = dateObj.toISOString();
+
+                const payload = {
+                    report_id: parseInt(reportId),
+                    description: description.trim(),
+                    scheduled_at: isoString
+                };
+
+                const response = await fetch('/drives/', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || `Failed to create drive: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                alert(`Cleanup event created successfully! Event ID: ${result.id}`);
+                
+                // Reset form
+                document.getElementById('driveForm').reset();
+                document.getElementById('reportInfo').style.display = 'none';
+            } catch (error) {
+                console.error('Error creating drive:', error);
+                alert(`Error creating cleanup event: ${error.message}`);
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('refresh_token');
+            localStorage.removeItem('token_type');
+            localStorage.removeItem('user_email');
+            window.location.href = 'login.html';
+        }
+    </script>
 </html>
