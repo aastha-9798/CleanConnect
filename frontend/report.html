@@ -105,19 +105,6 @@ CleanConnect</h3>
                     d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 0 1 0 3.75H5.625a1.875 1.875 0 0 1 0-3.75Z" />
                     </svg>
                     Waste Guidelines</a><br>
-                <a href="drives.html">
-                    <svg xmlns="http://www.w3.org/2000/svg" 
-                    fill="none" 
-                    viewBox="0 0 24 24" 
-                    stroke-width="1.5" 
-                    stroke="currentColor" 
-                    width="20"
-                    height="20">
-                    <path stroke-linecap="round" 
-                    stroke-linejoin="round" 
-                    d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" />
-                    </svg>
-                    Cleanup Drives</a><br>
                 <a href="profile.html">
                     <svg xmlns="http://www.w3.org/2000/svg" 
                     fill="none" 
@@ -239,6 +226,7 @@ CleanConnect</h3>
                                 <option value="road">Road Department</option>
                             </select><br><br>
                             <button type="submit" class="btn" style="padding: 10px;align-self: center; width: 100%;">Submit Report</button>
+                            <button type="submit" class="btn" style="padding: 10px;align-self: center; width: 100%;">Create drive</button>
                             <div id="statusMessage" style="margin-top: 15px; text-align: center; display: none;"></div>
                         </form>
                     </section>
@@ -250,7 +238,7 @@ CleanConnect</h3>
             </div>
         </div>
         <script>
-            const API_BASE_URL = 'http://localhost:8000';
+            const API_BASE_URL = '';
 
             // Check authentication on page load
             document.addEventListener('DOMContentLoaded', function() {
@@ -267,7 +255,7 @@ CleanConnect</h3>
                 const token = localStorage.getItem('access_token');
                 
                 try {
-                    const response = await fetch(`${API_BASE_URL}/reports/my-reports`, {
+                    const response = await fetch(`${API_BASE_URL}/user/me/reports`, {
                         method: 'GET',
                         headers: {
                             'Authorization': `Bearer ${token}`
@@ -310,6 +298,35 @@ CleanConnect</h3>
                 } catch (error) {
                     console.error('Error loading report history:', error);
                     reportHistoryDiv.innerHTML = '<p style="color: red;">Error loading reports. Please try again.</p>';
+                }
+            }
+
+            async function deleteReport(reportId) {
+                if (!confirm('Are you sure you want to delete this report?')) {
+                    return;
+                }
+
+                const token = localStorage.getItem('access_token');
+
+                try {
+                    const response = await fetch(`${API_BASE_URL}/reports/${reportId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+
+                    if (response.ok) {
+                        alert('Report deleted successfully');
+                        // Reload the report history
+                        loadReportHistory();
+                    } else {
+                        const errorData = await response.json();
+                        alert(`Failed to delete report: ${errorData.detail || 'Unknown error'}`);
+                    }
+                } catch (error) {
+                    console.error('Error deleting report:', error);
+                    alert('Error deleting report. Please try again.');
                 }
             }
 

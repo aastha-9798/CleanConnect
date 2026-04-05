@@ -7,6 +7,7 @@ from backend.authentication.dependencies import get_current_user
 from backend.reports.models import Report
 from backend.drives.models import Drive , Participation
 from backend.drives.schemas import CreateDriveRequest
+from backend.authentication.models import User
 
 router = APIRouter()
 
@@ -36,8 +37,18 @@ def create_drive(
         longitude=report.longitude
     )
     db.add(new_drive)
+    db.flush()
+
+    new_participation = Participation(
+        user_id=curr_user.id,
+        drive_id=new_drive.id
+    )
+
+    db.add(new_participation)
     db.commit()
+
     db.refresh(new_drive)
+    db.refresh(new_participation)
     print("Drive created with ID:", new_drive.id , "by user:", curr_user.username)
 
     return{
@@ -109,14 +120,16 @@ def get_feed(
 
     for report in reports:
         drive = db.query(Drive).filter((Drive.report_id == report.id) &(Drive.status == "planned")).first()
-
+        reported_by= db.query(User).filter(User.id == report.user_id).first()
+        image_url =  str(request.base_url) + report.image_path.replace("\\", "/")
+        
         if drive:
             count = db.query(Participation).filter(Participation.drive_id == drive.id).count()
-
-            image_url =  str(request.base_url) + report.image_path.replace("\\", "/")
-
+            created_by=db.query(User).filter(User.id == drive.user_id ).first()
+            
             with_drives.append({
                 "drive_id": drive.id,
+                "organized by": created_by.username,
                 "description": drive.description,
                 "scheduled_at": drive.scheduled_at,
                 "participant_count": count,
@@ -130,13 +143,14 @@ def get_feed(
             })
 
         else:
-            image_url = str(request.base_url) + report.image_path.replace("\\", "/")
-
             without_drives.append({
                 "id": report.id,
+                "reported_by": reported_by.username,
+                "date reported": report.created_at,
                 "description": report.description,
                 "latitude": report.latitude,
                 "longitude": report.longitude,
+                "status": report.status,
                 "image": image_url
             })
 
