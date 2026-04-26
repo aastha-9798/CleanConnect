@@ -992,7 +992,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round"
                         d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 0 1 0 3.75H5.625a1.875 1.875 0 0 1 0-3.75Z" />
                 </svg>
-                Waste Guidelines</a><br>
+                Waste Segregation</a><br>
             <a href="profile.html">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                     stroke="currentColor" width="20" height="20">
@@ -1089,7 +1089,7 @@
     <!-- See All Reports Panel -->
     <div class="see-all-panel" id="seeAllReportsPanel">
         <div class="see-all-panel-header">
-            <h3>📍 Reports Near You</h3>
+            <h3>Reports Near You</h3>
             <button class="close-btn" onclick="closeSeeAll()">&times;</button>
         </div>
         <div class="see-all-panel-body" id="seeAllReportsBody">
@@ -1100,7 +1100,7 @@
     <!-- See All Drives Panel -->
     <div class="see-all-panel" id="seeAllDrivesPanel">
         <div class="see-all-panel-header">
-            <h3>🚗 Planned Drives Near You</h3>
+            <h3>Planned Drives Near You</h3>
             <button class="close-btn" onclick="closeSeeAll()">&times;</button>
         </div>
         <div class="see-all-panel-body" id="seeAllDrivesBody">
@@ -1109,432 +1109,274 @@
     </div>
 
     <script>
-        // Check if user is logged in
-        const accessToken = localStorage.getItem('access_token');
-        if (!accessToken) {
-            window.location.href = 'login.html';
-        }
+ const accessToken = localStorage.getItem('access_token');
+if (!accessToken) window.location.href = 'login.html';
 
-        // Logged-in user & joined drives tracking
-        let currentUser = null;
-        let joinedDriveIds = new Set();
+let currentUser = null;
+let joinedDriveIds = new Set();
+let nearbyReports = [];
+let nearbyDrives = [];
 
-        // Data from /drives/feed
-        let nearbyReports = [];
-        let nearbyDrives = [];
+function authHeader() {
+    return { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` };
+}
 
-        // Load user info
-        async function loadUserInfo() {
-            try {
-                const response = await fetch('/auth/me', {
-                    headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
-                });
-                if (response.ok) {
-                    currentUser = await response.json();
-                    document.getElementById('heroName').textContent = currentUser.username;
-                } else {
-                    await refreshToken();
-                }
-            } catch (error) {
-                console.error('Error loading user info:', error);
-            }
-        }
+function logout() {
+    ['access_token', 'refresh_token', 'token_type', 'user_email'].forEach(k => localStorage.removeItem(k));
+    window.location.href = 'login.html';
+}
 
-        // Refresh token
-        async function refreshToken() {
-            const rt = localStorage.getItem('refresh_token');
-            if (!rt) { logout(); return; }
-            try {
-                const response = await fetch('/auth/refresh', {
-                    method: 'GET',
-                    headers: { 'Authorization': `Bearer ${rt}` }
-                });
-                if (response.ok) {
-                    const data = await response.json();
-                    localStorage.setItem('access_token', data.access_token);
-                    loadUserInfo();
-                } else {
-                    logout();
-                }
-            } catch (error) {
-                logout();
-            }
-        }
-
-        // Logout function
-        function logout() {
-            localStorage.removeItem('access_token');
-            localStorage.removeItem('refresh_token');
-            localStorage.removeItem('token_type');
-            localStorage.removeItem('user_email');
-            window.location.href = 'login.html';
-        }
-
-        // Load feed from /drives/feed — returns { drives: [...], reports: [...] }
-        async function loadFeed() {
-            try {
-                const response = await fetch('/drives/feed');
-                if (response.ok) {
-                    const data = await response.json();
-                    nearbyReports = data.reports || [];
-                    nearbyDrives = data.drives || [];
-                    displayNearbyReports(nearbyReports);
-                    displayNearbyDrives(nearbyDrives);
-                } else if (response.status === 401) {
-                    await refreshToken();
-                    loadFeed();
-                } else {
-                    document.getElementById('nearbyFeed').innerHTML = '<div class="no-reports-message">Failed to load feed.</div>';
-                }
-            } catch (error) {
-                console.error('Error loading feed:', error);
-                document.getElementById('nearbyFeed').innerHTML = '<div class="no-reports-message">Error loading feed.</div>';
-            }
-        }
-
-        // Display reports (feed.reports shape: { id, description, latitude, longitude, image, reported_by, status, "date reported" })
-        function displayNearbyReports(reports) {
-            const feed = document.getElementById('nearbyFeed');
-            if (!reports || reports.length === 0) {
-                feed.innerHTML = '<div class="no-reports-message">No reports yet. Be the first to report!</div>';
-                return;
-            }
-            let html = '';
-            reports.forEach(report => {
-                const desc = report.description || 'No description';
-                const short = desc.length > 60 ? desc.substring(0, 60) + '...' : desc;
-                const statusClass = report.status === 'pending' ? 'status-pending' : 'status-verified';
-                // store index so modal can look up full object
-                html += `
-                    <div class="report-card-h" style="cursor:pointer;"
-                         onclick="openReportModalByIndex(${reports.indexOf(report)})">
-                        <img src="${report.image}" alt="Report image">
-                        <div class="report-card-h-content">
-                            <div class="report-card-h-user">by <strong>${report.reported_by || 'Unknown'}</strong></div>
-                            <div class="report-card-h-description">${short}</div>
-                            <div class="report-card-h-location">&#128205; ${report.latitude.toFixed(4)}, ${report.longitude.toFixed(4)}</div>
-                            <div class="report-card-h-footer">
-                                <span class="report-card-h-status ${statusClass}">${report.status}</span>
-                            </div>
-                        </div>
-                    </div>`;
-            });
-            feed.innerHTML = html;
-        }
-
-        // Display drives (feed.drives shape: { drive_id, "organized by", description, scheduled_at, participant_count, latitude, longitude, image, report })
-        function displayNearbyDrives(drives) {
-            const feed = document.getElementById('nearbyDrivesFeed');
-            if (!drives || drives.length === 0) {
-                feed.innerHTML = '<div class="no-reports-message">No planned drives yet.</div>';
-                return;
-            }
-            let html = '';
-            drives.forEach(drive => {
-                const date = new Date(drive.scheduled_at).toLocaleDateString();
-                const time = new Date(drive.scheduled_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                const imgHtml = drive.image ? `<img class="drive-card-h-img" src="${drive.image}" alt="Drive location">` : '';
-                const hasJoined = joinedDriveIds.has(String(drive.drive_id));
-                const joinedBadge = hasJoined ? `<div class="drive-joined-badge">&#10003; Joined</div>` : '';
-                const organizer = drive["organized by"] || '';
-                html += `
-                    <div class="drive-card-h"
-                         onclick="openDriveModalByIndex(${drives.indexOf(drive)})">
-                        ${imgHtml}
-                        <div class="drive-card-h-body">
-                            <div class="drive-card-h-header">
-                                <div class="drive-card-h-title">&#128197; Cleanup Drive</div>
-                                ${organizer ? `<div class="drive-card-h-creator">by ${organizer}</div>` : ''}
-                                <div class="drive-card-h-date">${date} at ${time}</div>
-                            </div>
-                            <div class="drive-card-h-location">&#128205; ${drive.latitude.toFixed(4)}, ${drive.longitude.toFixed(4)}</div>
-                            <div class="drive-card-h-description">${drive.description}</div>
-                            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:4px;">
-                                <div class="drive-card-h-status">planned</div>
-                                <span style="font-size:10px;color:#666;">&#128101; ${drive.participant_count}</span>
-                                ${joinedBadge}
-                            </div>
-                        </div>
-                    </div>`;
-            });
-            feed.innerHTML = html;
-        }
-
-        // Open report modal — looks up full object from nearbyReports by index
-        function openReportModalByIndex(idx) {
-            const report = nearbyReports[idx];
-            if (!report) return;
-            openReportModal(report);
-        }
-
-        function openReportModal(report) {
-            document.getElementById('modalTitle').textContent = 'Report Details';
-            document.getElementById('modalImage').src = report.image;
-            document.getElementById('modalImage').style.display = 'block';
-
-            const dateStr = report["date reported"]
-                ? new Date(report["date reported"]).toLocaleDateString()
-                : 'N/A';
-            const statusClass = report.status === 'pending' ? 'status-pending' : 'status-verified';
-
-            document.getElementById('modalInfo').innerHTML = `
-                <div class="modal-info-row">
-                    <span class="modal-info-label">Reported by:</span>
-                    <span class="modal-info-value">${report.reported_by || 'Unknown'}</span>
-                </div>
-                <div class="modal-info-row">
-                    <span class="modal-info-label">Description:</span>
-                    <span class="modal-info-value">${report.description || 'N/A'}</span>
-                </div>
-                <div class="modal-info-row">
-                    <span class="modal-info-label">Location:</span>
-                    <span class="modal-info-value">${report.latitude.toFixed(4)}, ${report.longitude.toFixed(4)}</span>
-                </div>
-                <div class="modal-info-row">
-                    <span class="modal-info-label">Date Reported:</span>
-                    <span class="modal-info-value">${dateStr}</span>
-                </div>
-                <div class="modal-info-row">
-                    <span class="modal-info-label">Status:</span>
-                    <span class="modal-info-value"><span class="report-card-h-status ${statusClass}">${report.status}</span></span>
-                </div>`;
-
-            document.getElementById('modalActions').innerHTML = `
-                <button class="modal-btn btn-primary" onclick="openCreateDriveForm(${report.id})">Create Cleanup Drive</button>
-                <button class="modal-btn btn-secondary" onclick="closeModal()">Close</button>`;
-
-            document.getElementById('detailsModal').style.display = 'block';
-        }
-
-        // Open drive modal — looks up full object from nearbyDrives by index
-        function openDriveModalByIndex(idx) {
-            const drive = nearbyDrives[idx];
-            if (!drive) return;
-            openDriveModal(drive);
-        }
-
-        function openDriveModal(drive) {
-            document.getElementById('modalTitle').textContent = 'Drive Details';
-            if (drive.image) {
-                document.getElementById('modalImage').src = drive.image;
-                document.getElementById('modalImage').style.display = 'block';
-            } else {
-                document.getElementById('modalImage').style.display = 'none';
-            }
-
-            const date = new Date(drive.scheduled_at).toLocaleDateString();
-            const time = new Date(drive.scheduled_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            const organizer = drive["organized by"] || 'Unknown';
-
-            document.getElementById('modalInfo').innerHTML = `
-                <div class="modal-info-row">
-                    <span class="modal-info-label">Organized by:</span>
-                    <span class="modal-info-value">${organizer}</span>
-                </div>
-                <div class="modal-info-row">
-                    <span class="modal-info-label">Description:</span>
-                    <span class="modal-info-value">${drive.description}</span>
-                </div>
-                <div class="modal-info-row">
-                    <span class="modal-info-label">Scheduled:</span>
-                    <span class="modal-info-value">${date} at ${time}</span>
-                </div>
-                <div class="modal-info-row">
-                    <span class="modal-info-label">Location:</span>
-                    <span class="modal-info-value">${drive.latitude.toFixed(4)}, ${drive.longitude.toFixed(4)}</span>
-                </div>
-                <div class="modal-info-row">
-                    <span class="modal-info-label">Status:</span>
-                    <span class="modal-info-value"><span class="drive-card-h-status">planned</span></span>
-                </div>
-                <div class="modal-info-row">
-                    <span class="modal-info-label">Participants:</span>
-                    <span class="modal-info-value">&#128101; ${drive.participant_count}</span>
-                </div>`;
-
-            const hasJoined = joinedDriveIds.has(String(drive.drive_id));
-            if (hasJoined) {
-                document.getElementById('modalActions').innerHTML = `
-                    <button class="modal-btn btn-joined" disabled>&#10003; Already Joined</button>
-                    <button class="modal-btn btn-secondary" onclick="closeModal()">Close</button>`;
-            } else {
-                document.getElementById('modalActions').innerHTML = `
-                    <button class="modal-btn btn-primary" onclick="joinDriveByIndex(${nearbyDrives.indexOf(drive)})">Join This Drive</button>
-                    <button class="modal-btn btn-secondary" onclick="closeModal()">Close</button>`;
-            }
-            document.getElementById('detailsModal').style.display = 'block';
-        }
-
-        // Open create drive form (inline in modal)
-        function openCreateDriveForm(reportId) {
-            const scheduledDate = new Date();
-            scheduledDate.setDate(scheduledDate.getDate() + 1);
-            const dateTimeString = scheduledDate.toISOString().split('T')[0] + 'T10:00';
-
-            document.getElementById('modalTitle').textContent = 'Create Cleanup Drive';
-            document.getElementById('modalImage').style.display = 'none';
-
-            document.getElementById('modalInfo').innerHTML = `
-                <div style="margin-bottom:15px;">
-                    <label style="display:block;margin-bottom:8px;font-weight:600;color:#014c01f3;">Drive Description</label>
-                    <textarea id="driveDescription" placeholder="Describe the cleanup drive..." style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px;font-family:inherit;resize:vertical;min-height:80px;box-sizing:border-box;"></textarea>
-                </div>
-                <div>
-                    <label style="display:block;margin-bottom:8px;font-weight:600;color:#014c01f3;">Scheduled Date and Time</label>
-                    <input type="datetime-local" id="driveScheduledAt" value="${dateTimeString}" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px;font-family:inherit;box-sizing:border-box;">
-                </div>`;
-
-            document.getElementById('modalActions').innerHTML = `
-                <button class="modal-btn btn-primary" onclick="submitCreateDrive(${reportId})">Create Drive</button>
-                <button class="modal-btn btn-secondary" onclick="closeModal()">Cancel</button>`;
-        }
-
-        // Submit create drive
-        async function submitCreateDrive(reportId) {
-            const description = document.getElementById('driveDescription').value;
-            const scheduledAt = document.getElementById('driveScheduledAt').value;
-            if (!description.trim()) { alert('Please enter a drive description'); return; }
-            if (!scheduledAt) { alert('Please select a date and time'); return; }
-            try {
-                const response = await fetch('/drives/', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        report_id: reportId,
-                        description: description,
-                        scheduled_at: new Date(scheduledAt).toISOString()
-                    })
-                });
-                if (response.ok) {
-                    alert('Drive created successfully!');
-                    closeModal();
-                    loadFeed();
-                } else {
-                    const error = await response.json();
-                    alert('Failed to create drive: ' + error.detail);
-                }
-            } catch (error) {
-                alert('Error creating drive. Please try again.');
-            }
-        }
-
-        // Join drive
-        async function joinDriveByIndex(idx) {
-            const drive = nearbyDrives[idx];
-            if (!drive) return;
-            try {
-                const response = await fetch('/drives/' + drive.drive_id + '/join', {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
-                });
-                if (response.ok) {
-                    joinedDriveIds.add(String(drive.drive_id));
-                    drive.participant_count += 1;
-                    displayNearbyDrives(nearbyDrives);
-                    renderSeeAllDrives();
-                    openDriveModal(drive);
-                } else {
-                    const error = await response.json();
-                    alert('Failed to join drive: ' + error.detail);
-                }
-            } catch (error) {
-                alert('Error joining drive. Please try again.');
-            }
-        }
-
-        // Close modal
-        function closeModal() {
-            document.getElementById('detailsModal').style.display = 'none';
-            document.getElementById('modalImage').style.display = 'block';
-        }
-
-        // See All panels
-        function openSeeAllReports() {
-            document.getElementById('seeAllOverlay').classList.add('open');
-            document.getElementById('seeAllReportsPanel').classList.add('open');
-            renderSeeAllReports();
-        }
-
-        function openSeeAllDrives() {
-            document.getElementById('seeAllOverlay').classList.add('open');
-            document.getElementById('seeAllDrivesPanel').classList.add('open');
-            renderSeeAllDrives();
-        }
-
-        function closeSeeAll() {
-            document.getElementById('seeAllOverlay').classList.remove('open');
-            document.getElementById('seeAllReportsPanel').classList.remove('open');
-            document.getElementById('seeAllDrivesPanel').classList.remove('open');
-        }
-
-        function renderSeeAllReports() {
-            const body = document.getElementById('seeAllReportsBody');
-            if (!nearbyReports || nearbyReports.length === 0) {
-                body.innerHTML = '<div class="panel-loading">No reports found.</div>';
-                return;
-            }
-            body.innerHTML = nearbyReports.map((report, idx) => {
-                const desc = report.description || 'No description';
-                const statusClass = report.status === 'pending' ? 'status-pending' : 'status-verified';
-                const dateStr = report["date reported"] ? new Date(report["date reported"]).toLocaleDateString() : '';
-                return `
-                <div class="panel-report-card" onclick="closeSeeAll(); openReportModalByIndex(${idx})">
-                    <img src="${report.image}" alt="Report image">
-                    <div class="panel-report-card-body">
-                        <div class="user">by <strong>${report.reported_by || 'Unknown'}</strong></div>
-                        <div class="desc">${desc}</div>
-                        <div class="loc">&#128205; ${report.latitude.toFixed(4)}, ${report.longitude.toFixed(4)}</div>
-                    </div>
-                    <div class="panel-report-card-footer">
-                        <span class="report-card-h-status ${statusClass}">${report.status}</span>
-                        <span style="font-size:11px;color:#999;">${dateStr}</span>
-                    </div>
-                </div>`;
-            }).join('');
-        }
-
-        function renderSeeAllDrives() {
-            const body = document.getElementById('seeAllDrivesBody');
-            if (!nearbyDrives || nearbyDrives.length === 0) {
-                body.innerHTML = '<div class="panel-loading">No drives found.</div>';
-                return;
-            }
-            body.innerHTML = nearbyDrives.map((drive, idx) => {
-                const date = new Date(drive.scheduled_at).toLocaleDateString();
-                const time = new Date(drive.scheduled_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                const imgHtml = drive.image ? `<img src="${drive.image}" alt="Drive" style="width:100%;height:160px;object-fit:cover;display:block;border-radius:8px;margin-bottom:10px;">` : '';
-                const hasJoined = joinedDriveIds.has(String(drive.drive_id));
-                const joinedBadge = hasJoined ? `<span class="drive-joined-badge">&#10003; Joined</span>` : '';
-                const organizer = drive["organized by"] || '';
-                return `
-                <div class="panel-drive-card" onclick="closeSeeAll(); openDriveModalByIndex(${idx})">
-                    ${imgHtml}
-                    <div class="drive-title">&#128197; Cleanup Drive</div>
-                    ${organizer ? `<div class="drive-date" style="color:#888;">by ${organizer}</div>` : ''}
-                    <div class="drive-date">${date} at ${time}</div>
-                    <div class="drive-loc">&#128205; ${drive.latitude.toFixed(4)}, ${drive.longitude.toFixed(4)}</div>
-                    <div class="drive-desc">${drive.description}</div>
-                    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:4px;">
-                        <span class="drive-card-h-status">planned</span>
-                        <span style="font-size:10px;color:#666;">&#128101; ${drive.participant_count}</span>
-                        ${joinedBadge}
-                    </div>
-                </div>`;
-            }).join('');
-        }
-
-        // Close modal when clicking outside
-        window.onclick = function (event) {
-            const modal = document.getElementById('detailsModal');
-            if (event.target === modal) { closeModal(); }
-        }
-
-        // Init
+async function refreshToken() {
+    const rt = localStorage.getItem('refresh_token');
+    if (!rt) { logout(); return; }
+    const res = await fetch('/auth/refresh', { method: 'GET', headers: { 'Authorization': `Bearer ${rt}` } });
+    if (res.ok) {
+        localStorage.setItem('access_token', (await res.json()).access_token);
         loadUserInfo();
+    } else logout();
+}
+
+async function loadUserInfo() {
+    const res = await fetch('/auth/me', { headers: authHeader() });
+    if (res.ok) {
+        currentUser = await res.json();
+        document.getElementById('heroName').textContent = currentUser.username;
+    } else await refreshToken();
+}
+
+async function loadFeed() {
+    const res = await fetch('/drives/feed');
+    if (res.ok) {
+        const data = await res.json();
+        nearbyReports = data.reports || [];
+        nearbyDrives = data.drives || [];
+        displayNearbyReports(nearbyReports);
+        displayNearbyDrives(nearbyDrives);
+    } else if (res.status === 401) {
+        await refreshToken();
         loadFeed();
+    } else {
+        document.getElementById('nearbyFeed').innerHTML = '<div class="no-reports-message">Failed to load feed.</div>';
+    }
+}
+
+function statusClass(status) {
+    return status === 'pending' ? 'status-pending' : 'status-verified';
+}
+
+function displayNearbyReports(reports) {
+    const feed = document.getElementById('nearbyFeed');
+    if (!reports?.length) {
+        feed.innerHTML = '<div class="no-reports-message">No reports yet. Be the first to report!</div>';
+        return;
+    }
+    feed.innerHTML = reports.map((r, i) => {
+        const short = r.description?.length > 60 ? r.description.substring(0, 60) + '...' : (r.description || 'No description');
+        return `
+        <div class="report-card-h" style="cursor:pointer;" onclick="openReportModalByIndex(${i})">
+            <img src="${r.image}" alt="Report image">
+            <div class="report-card-h-content">
+                <div class="report-card-h-user">by <strong>${r.reported_by || 'Unknown'}</strong></div>
+                <div class="report-card-h-description">${short}</div>
+                <div class="report-card-h-location">&#128205; ${r.latitude.toFixed(4)}, ${r.longitude.toFixed(4)}</div>
+                <div class="report-card-h-footer">
+                    <span class="report-card-h-status ${statusClass(r.status)}">${r.status}</span>
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function displayNearbyDrives(drives) {
+    const feed = document.getElementById('nearbyDrivesFeed');
+    if (!drives?.length) {
+        feed.innerHTML = '<div class="no-reports-message">No planned drives yet.</div>';
+        return;
+    }
+    feed.innerHTML = drives.map((d, i) => {
+        const date = new Date(d.scheduled_at).toLocaleDateString();
+        const time = new Date(d.scheduled_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const hasJoined = joinedDriveIds.has(String(d.drive_id));
+        return `
+        <div class="drive-card-h" onclick="openDriveModalByIndex(${i})">
+            ${d.image ? `<img class="drive-card-h-img" src="${d.image}" alt="Drive location">` : ''}
+            <div class="drive-card-h-body">
+                <div class="drive-card-h-header">
+                    <div class="drive-card-h-title">&#128197; Cleanup Drive</div>
+                    ${d["organized by"] ? `<div class="drive-card-h-creator">by ${d["organized by"]}</div>` : ''}
+                    <div class="drive-card-h-date">${date} at ${time}</div>
+                </div>
+                <div class="drive-card-h-location">&#128205; ${d.latitude.toFixed(4)}, ${d.longitude.toFixed(4)}</div>
+                <div class="drive-card-h-description">${d.description}</div>
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:4px;">
+                    <div class="drive-card-h-status">planned</div>
+                    <span style="font-size:10px;color:#666;">&#128101; ${d.participant_count}</span>
+                    ${hasJoined ? `<div class="drive-joined-badge">&#10003; Joined</div>` : ''}
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function openReportModalByIndex(idx) { openReportModal(nearbyReports[idx]); }
+function openDriveModalByIndex(idx) { openDriveModal(nearbyDrives[idx]); }
+
+function openReportModal(report) {
+    const dateStr = report["date reported"] ? new Date(report["date reported"]).toLocaleDateString() : 'N/A';
+    document.getElementById('modalTitle').textContent = 'Report Details';
+    document.getElementById('modalImage').src = report.image;
+    document.getElementById('modalImage').style.display = 'block';
+    document.getElementById('modalInfo').innerHTML = `
+        <div class="modal-info-row"><span class="modal-info-label">Reported by:</span><span class="modal-info-value">${report.reported_by || 'Unknown'}</span></div>
+        <div class="modal-info-row"><span class="modal-info-label">Description:</span><span class="modal-info-value">${report.description || 'N/A'}</span></div>
+        <div class="modal-info-row"><span class="modal-info-label">Location:</span><span class="modal-info-value">${report.latitude.toFixed(4)}, ${report.longitude.toFixed(4)}</span></div>
+        <div class="modal-info-row"><span class="modal-info-label">Date Reported:</span><span class="modal-info-value">${dateStr}</span></div>
+        <div class="modal-info-row"><span class="modal-info-label">Status:</span><span class="modal-info-value"><span class="report-card-h-status ${statusClass(report.status)}">${report.status}</span></span></div>`;
+    document.getElementById('modalActions').innerHTML = `
+        <button class="modal-btn btn-primary" onclick="openCreateDriveForm(${report.id})">Create Cleanup Drive</button>
+        <button class="modal-btn btn-secondary" onclick="closeModal()">Close</button>`;
+    document.getElementById('detailsModal').style.display = 'block';
+}
+
+function openDriveModal(drive) {
+    const date = new Date(drive.scheduled_at).toLocaleDateString();
+    const time = new Date(drive.scheduled_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const hasJoined = joinedDriveIds.has(String(drive.drive_id));
+    document.getElementById('modalTitle').textContent = 'Drive Details';
+    document.getElementById('modalImage').style.display = drive.image ? 'block' : 'none';
+    if (drive.image) document.getElementById('modalImage').src = drive.image;
+    document.getElementById('modalInfo').innerHTML = `
+        <div class="modal-info-row"><span class="modal-info-label">Organized by:</span><span class="modal-info-value">${drive["organized by"] || 'Unknown'}</span></div>
+        <div class="modal-info-row"><span class="modal-info-label">Description:</span><span class="modal-info-value">${drive.description}</span></div>
+        <div class="modal-info-row"><span class="modal-info-label">Scheduled:</span><span class="modal-info-value">${date} at ${time}</span></div>
+        <div class="modal-info-row"><span class="modal-info-label">Location:</span><span class="modal-info-value">${drive.latitude.toFixed(4)}, ${drive.longitude.toFixed(4)}</span></div>
+        <div class="modal-info-row"><span class="modal-info-label">Status:</span><span class="modal-info-value"><span class="drive-card-h-status">planned</span></span></div>
+        <div class="modal-info-row"><span class="modal-info-label">Participants:</span><span class="modal-info-value">&#128101; ${drive.participant_count}</span></div>`;
+    document.getElementById('modalActions').innerHTML = hasJoined
+        ? `<button class="modal-btn btn-joined" disabled>&#10003; Already Joined</button>
+           <button class="modal-btn btn-secondary" onclick="closeModal()">Close</button>`
+        : `<button class="modal-btn btn-primary" onclick="joinDriveByIndex(${nearbyDrives.indexOf(drive)})">Join This Drive</button>
+           <button class="modal-btn btn-secondary" onclick="closeModal()">Close</button>`;
+    document.getElementById('detailsModal').style.display = 'block';
+}
+
+function openCreateDriveForm(reportId) {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const dateTimeString = tomorrow.toISOString().split('T')[0] + 'T10:00';
+    document.getElementById('modalTitle').textContent = 'Create Cleanup Drive';
+    document.getElementById('modalImage').style.display = 'none';
+    document.getElementById('modalInfo').innerHTML = `
+        <div style="margin-bottom:15px;">
+            <label style="display:block;margin-bottom:8px;font-weight:600;color:#014c01f3;">Drive Description</label>
+            <textarea id="driveDescription" placeholder="Describe the cleanup drive..." style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px;font-family:inherit;resize:vertical;min-height:80px;box-sizing:border-box;"></textarea>
+        </div>
+        <div>
+            <label style="display:block;margin-bottom:8px;font-weight:600;color:#014c01f3;">Scheduled Date and Time</label>
+            <input type="datetime-local" id="driveScheduledAt" value="${dateTimeString}" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px;font-family:inherit;box-sizing:border-box;">
+        </div>`;
+    document.getElementById('modalActions').innerHTML = `
+        <button class="modal-btn btn-primary" onclick="submitCreateDrive(${reportId})">Create Drive</button>
+        <button class="modal-btn btn-secondary" onclick="closeModal()">Cancel</button>`;
+}
+
+async function submitCreateDrive(reportId) {
+    const description = document.getElementById('driveDescription').value;
+    const scheduledAt = document.getElementById('driveScheduledAt').value;
+    if (!description.trim()) { alert('Please enter a drive description'); return; }
+    if (!scheduledAt) { alert('Please select a date and time'); return; }
+    const res = await fetch('/drives/', {
+        method: 'POST',
+        headers: { ...authHeader(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ report_id: reportId, description, scheduled_at: new Date(scheduledAt).toISOString() })
+    });
+    if (res.ok) { alert('Drive created successfully!'); closeModal(); loadFeed(); }
+    else alert('Failed to create drive: ' + (await res.json()).detail);
+}
+
+async function joinDriveByIndex(idx) {
+    const drive = nearbyDrives[idx];
+    if (!drive) return;
+    const res = await fetch(`/drives/${drive.drive_id}/join`, { method: 'POST', headers: authHeader() });
+    if (res.ok) {
+        joinedDriveIds.add(String(drive.drive_id));
+        drive.participant_count += 1;
+        displayNearbyDrives(nearbyDrives);
+        renderSeeAllDrives();
+        openDriveModal(drive);
+    } else alert('Failed to join drive: ' + (await res.json()).detail);
+}
+
+function closeModal() {
+    document.getElementById('detailsModal').style.display = 'none';
+    document.getElementById('modalImage').style.display = 'block';
+}
+
+window.onclick = event => { if (event.target === document.getElementById('detailsModal')) closeModal(); };
+
+function openSeeAllReports() {
+    document.getElementById('seeAllOverlay').classList.add('open');
+    document.getElementById('seeAllReportsPanel').classList.add('open');
+    renderSeeAllReports();
+}
+
+function openSeeAllDrives() {
+    document.getElementById('seeAllOverlay').classList.add('open');
+    document.getElementById('seeAllDrivesPanel').classList.add('open');
+    renderSeeAllDrives();
+}
+
+function closeSeeAll() {
+    ['seeAllOverlay', 'seeAllReportsPanel', 'seeAllDrivesPanel'].forEach(id => document.getElementById(id).classList.remove('open'));
+}
+
+function renderSeeAllReports() {
+    const body = document.getElementById('seeAllReportsBody');
+    if (!nearbyReports?.length) { body.innerHTML = '<div class="panel-loading">No reports found.</div>'; return; }
+    body.innerHTML = nearbyReports.map((r, i) => {
+        const dateStr = r["date reported"] ? new Date(r["date reported"]).toLocaleDateString() : '';
+        return `
+        <div class="panel-report-card" onclick="closeSeeAll(); openReportModalByIndex(${i})">
+            <img src="${r.image}" alt="Report image">
+            <div class="panel-report-card-body">
+                <div class="user">by <strong>${r.reported_by || 'Unknown'}</strong></div>
+                <div class="desc">${r.description || 'No description'}</div>
+                <div class="loc">&#128205; ${r.latitude.toFixed(4)}, ${r.longitude.toFixed(4)}</div>
+            </div>
+            <div class="panel-report-card-footer">
+                <span class="report-card-h-status ${statusClass(r.status)}">${r.status}</span>
+                <span style="font-size:11px;color:#999;">${dateStr}</span>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function renderSeeAllDrives() {
+    const body = document.getElementById('seeAllDrivesBody');
+    if (!nearbyDrives?.length) { body.innerHTML = '<div class="panel-loading">No drives found.</div>'; return; }
+    body.innerHTML = nearbyDrives.map((d, i) => {
+        const date = new Date(d.scheduled_at).toLocaleDateString();
+        const time = new Date(d.scheduled_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const hasJoined = joinedDriveIds.has(String(d.drive_id));
+        return `
+        <div class="panel-drive-card" onclick="closeSeeAll(); openDriveModalByIndex(${i})">
+            ${d.image ? `<img src="${d.image}" alt="Drive" style="width:100%;height:160px;object-fit:cover;display:block;border-radius:8px;margin-bottom:10px;">` : ''}
+            <div class="drive-title">&#128197; Cleanup Drive</div>
+            ${d["organized by"] ? `<div class="drive-date" style="color:#888;">by ${d["organized by"]}</div>` : ''}
+            <div class="drive-date">${date} at ${time}</div>
+            <div class="drive-loc">&#128205; ${d.latitude.toFixed(4)}, ${d.longitude.toFixed(4)}</div>
+            <div class="drive-desc">${d.description}</div>
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:4px;">
+                <span class="drive-card-h-status">planned</span>
+                <span style="font-size:10px;color:#666;">&#128101; ${d.participant_count}</span>
+                ${hasJoined ? `<span class="drive-joined-badge">&#10003; Joined</span>` : ''}
+            </div>
+        </div>`;
+    }).join('');
+}
+
+loadUserInfo();
+loadFeed();
     </script>
 </body>
 

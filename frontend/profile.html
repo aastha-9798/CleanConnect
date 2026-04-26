@@ -308,7 +308,7 @@
                     stroke-linejoin="round" 
                     d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 0 1 0 3.75H5.625a1.875 1.875 0 0 1 0-3.75Z" />
                     </svg>
-                    Waste Guidelines</a><br>
+                    Waste Segregation</a><br>
                 <article class="active-tab">
                 <a href="profile.html">
                     <svg xmlns="http://www.w3.org/2000/svg" 
@@ -454,10 +454,13 @@
                     const reports = reportsResp.ok ? await reportsResp.json() : [];
                     const drivesData = drivesResp.ok ? await drivesResp.json() : { drives: [] };
                     const drives = drivesData.drives || [];
-                    const totalParticipants = drives.reduce((sum, d) => sum + (d.participant_count || 0), 0);
+                    const username = currentUser?.username;
+                    const organized = drives.filter(d => d.organized_by === username);
+                    const joined = drives.filter(d => d.organized_by !== username);
+                    const totalParticipants = organized.reduce((sum, d) => sum + (d.participant_count || 0), 0);
                     document.getElementById('reportsCount').textContent = reports.length;
-                    document.getElementById('drivesOrgCount').textContent = 0;
-                    document.getElementById('drivesJoinCount').textContent = drives.length;
+                    document.getElementById('drivesOrgCount').textContent = organized.length;
+                    document.getElementById('drivesJoinCount').textContent = joined.length;
                     document.getElementById('participantsCount').textContent = totalParticipants;
                 } catch (error) {
                     console.error('Failed to load stats:', error);
@@ -505,49 +508,62 @@
                 }
             }
 
-            async function loadOrganizedDrives() {
-                // No dedicated endpoint for organized drives yet — hide section
-                document.getElementById('organizedDrivesContainer').innerHTML =
-                    '<div class="empty-message">Feature coming soon.</div>';
+            function renderDriveCard(drive, isOrganized) {
+                const date = new Date(drive.scheduled_at).toLocaleDateString();
+                const joinedDate = new Date(drive.joined_at).toLocaleDateString();
+                const card = document.createElement('div');
+                card.className = 'drive-card';
+                card.innerHTML = `
+                    <img src="${drive.image}" alt="Drive" class="card-image" onerror="this.src='https://via.placeholder.com/280x180?text=No+Image'">
+                    <div class="card-content">
+                        <div class="card-title">${isOrganized ? '🚗 Organized Drive' : '👥 Joined Drive'}</div>
+                        <div class="card-meta">Scheduled: ${date} | ${isOrganized ? 'Created' : 'Joined'}: ${joinedDate}</div>
+                        <div class="card-description">${drive.description}</div>
+                        <div class="card-footer">
+                            <span class="badge badge-planned">${drive.status}</span>
+                            <span class="participants-count">👥 ${drive.participant_count}</span>
+                        </div>
+                    </div>
+                `;
+                return card;
             }
 
-            async function loadParticipatedDrives() {
+            async function loadOrganizedDrives() {}  // driven by loadAllDrives
+            async function loadParticipatedDrives() {}  // driven by loadAllDrives
+
+            async function loadAllDrives() {
                 try {
                     const response = await fetch('/user/me/drives', {
                         headers: { 'Authorization': `Bearer ${accessToken}` }
                     });
                     if (!response.ok) throw new Error('Failed to fetch drives');
                     const data = await response.json();
-                    const drives = data.drives;
+                    const drives = data.drives || [];
+                    const username = currentUser?.username;
 
-                    const container = document.getElementById('participatedDrivesContainer');
-                    if (drives.length === 0) {
-                        container.innerHTML = '<div class="empty-message">You haven\'t joined any cleanup drives yet. <a href="home.html">Find drives near you</a></div>';
-                        return;
+                    const organized = drives.filter(d => d.organized_by === username);
+                    const joined = drives.filter(d => d.organized_by !== username);
+
+                    // Organized drives
+                    const orgContainer = document.getElementById('organizedDrivesContainer');
+                    if (organized.length === 0) {
+                        orgContainer.innerHTML = '<div class="empty-message">You haven\'t organized any drives yet. <a href="home.html">Create one from a report</a></div>';
+                    } else {
+                        orgContainer.innerHTML = '';
+                        organized.forEach(d => orgContainer.appendChild(renderDriveCard(d, true)));
                     }
 
-                    container.innerHTML = '';
-                    drives.forEach(drive => {
-                        const date = new Date(drive.scheduled_at).toLocaleDateString();
-                        const joinedDate = new Date(drive.joined_at).toLocaleDateString();
-                        const card = document.createElement('div');
-                        card.className = 'drive-card';
-                        card.innerHTML = `
-                            <img src="${drive.image}" alt="Drive" class="card-image" onerror="this.src='https://via.placeholder.com/280x180?text=No+Image'">
-                            <div class="card-content">
-                                <div class="card-title">👥 Joined Drive</div>
-                                <div class="card-meta">Scheduled: ${date} | Joined: ${joinedDate}</div>
-                                <div class="card-description">${drive.description}</div>
-                                <div class="card-footer">
-                                    <span class="badge badge-planned">${drive.status}</span>
-                                    <span class="participants-count">👥 ${drive.participant_count}</span>
-                                </div>
-                            </div>
-                        `;
-                        container.appendChild(card);
-                    });
+                    // Joined drives
+                    const joinContainer = document.getElementById('participatedDrivesContainer');
+                    if (joined.length === 0) {
+                        joinContainer.innerHTML = '<div class="empty-message">You haven\'t joined any cleanup drives yet. <a href="home.html">Find drives near you</a></div>';
+                    } else {
+                        joinContainer.innerHTML = '';
+                        joined.forEach(d => joinContainer.appendChild(renderDriveCard(d, false)));
+                    }
                 } catch (error) {
-                    console.error('Failed to load participated drives:', error);
+                    console.error('Failed to load drives:', error);
+                    document.getElementById('organizedDrivesContainer').innerHTML = '<div class="empty-message">Unable to load drives</div>';
                     document.getElementById('participatedDrivesContainer').innerHTML = '<div class="empty-message">Unable to load drives</div>';
                 }
             }
@@ -560,14 +576,12 @@
                 window.location.href = 'login.html';
             }
 
-            // Load all data
-            Promise.all([
-                loadProfile(),
-                loadStats(),
-                loadReports(),
-                loadOrganizedDrives(),
-                loadParticipatedDrives()
-            ]);
+            // Load all data — drives must wait for loadProfile so currentUser.username is set
+            loadProfile().then(() => {
+                loadStats();
+                loadReports();
+                loadAllDrives();
+            });
 
             document.getElementById('logoutBtn').addEventListener('click', logout);
         </script>
