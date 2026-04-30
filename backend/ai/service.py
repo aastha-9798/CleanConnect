@@ -53,7 +53,7 @@ def build_context(messages):
     for msg in messages:
         if msg.role == "user":
             if msg.image_path:
-                conversation.append(f"User: {msg.content} (user provided an image)")
+                conversation.append(f"User: {msg.content}")
             else:
                 conversation.append(f"User: {msg.content}")
         else:
@@ -80,17 +80,15 @@ def handle_user_input(db, user_id, user_message, image_path=None):
         - Use simple, everyday language
         - Be friendly and helpful
         - Avoid technical terms
+        - If user provides image , respond in its context 
 
         Response length rules:
         - If the user asks a simple question → keep answer short (2–3 sentences)
-        - If the user asks for instructions (e.g., "how to", "steps", "what should I do") → give a slightly longer answer (4–6 lines max), but still simple and clear
+        - If the user asks for instructions (e.g., "how to", "steps", "what should I do") → give a slightly longer answer (4–6 lines max), in bulleted points / steps
         - Do NOT give very long or complex explanations
 
         Conversation:
         {context}
-
-        The user has also provided an image.
-        Use both the image and conversation to answer.
 
         Assistant:
         """
